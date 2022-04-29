@@ -1,7 +1,6 @@
 <template>
     <div id="app">
         <div class="_fc-t-header">
-            <img class="_fc-t-logo" src="http://form-create.com/logo.png">
             <div class="_fc-t-name">form-create-designer</div>
             <div class="_fc-t-menu">
                 <el-button size="mini" icon="fc-icon icon-import" @click="setJson"> 导入JSON</el-button>
