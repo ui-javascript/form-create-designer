@@ -10,6 +10,7 @@
     "scripts": {
         "clean": "rimraf dist/",
         "dev": "vue-cli-service serve",
+        "build:prod": "vue-cli-service build",
         "rollup": "rollup -c ./rollup.config.js",
         "build": "npm-run-all clean rollup"
     },

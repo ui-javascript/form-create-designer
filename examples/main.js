@@ -11,6 +11,16 @@ Vue.component('FcDesigner', FcDesigner);
 
 Vue.config.productionTip = false;
 
-new Vue({
-    render: h => h(App),
-}).$mount('#app');
+window.addEventListener('message', init, false)
+
+function init(event) {
+    if (event.data.cmd === 'mountApp') {
+        window.$JSON = event.data.data  
+
+        new Vue({
+            render: h => h(App),
+        }).$mount('#app');
+        
+    }
+}
+
