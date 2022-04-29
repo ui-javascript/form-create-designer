@@ -6,7 +6,7 @@ module.exports = {
             filename: 'index.html'
         }
     },
-    publicPath: '/',
+    publicPath: './',
     outputDir: 'docs',
     productionSourceMap: false,
     configureWebpack: {

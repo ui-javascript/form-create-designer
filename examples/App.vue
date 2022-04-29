@@ -13,8 +13,11 @@
         </div>
         <fc-designer ref="designer"/>
 
+<<<<<<< Updated upstream
 
 
+=======
+>>>>>>> Stashed changes
         <el-dialog :title="title[type]" :visible.sync="state" class="_fc-t-dialog">
             <div ref="editor" v-if="state"></div>
             <span style="color: red;" v-if="err">输入内容格式有误!</span>
@@ -185,7 +188,6 @@ export default {
         this.$refs.designer.setRule(window.$JSON)
     }
 };
-
 
 </script>
 
