@@ -3,11 +3,12 @@
         <div class="_fc-t-header">
             <div class="_fc-t-name">form-create-designer</div>
             <div class="_fc-t-menu">
-                <el-button size="mini" icon="fc-icon icon-import" @click="setJson"> 导入JSON</el-button>
-                <el-button size="mini" icon="fc-icon icon-import" @click="setOption"> 导入Options</el-button>
-                <el-button size="mini" type="primary" @click="showJson">生成JSON</el-button>
-                <el-button size="mini" type="success" @click="showOption">生成Options</el-button>
-                <el-button size="mini" type="danger" @click="showTemplate">生成组件</el-button>
+                <el-button size="mini" icon="fc-icon icon-import" @click="setJson">导入Rule</el-button>
+                <el-button size="mini" icon="fc-icon icon-import" @click="setOption">导入Option</el-button>
+                
+                <el-button size="mini" type="primary" @click="showJson">预览Rule</el-button>
+                <el-button size="mini" type="success" @click="showOption">预览Option</el-button>
+                <el-button size="mini" type="danger" @click="showTemplate">更新当前JSON文件</el-button>
             </div>
         </div>
         <fc-designer ref="designer"/>
@@ -15,10 +16,10 @@
         <el-dialog :title="title[type]" :visible.sync="state" class="_fc-t-dialog">
             <div ref="editor" v-if="state"></div>
             <span style="color: red;" v-if="err">输入内容格式有误!</span>
-            <span slot="footer" class="dialog-footer" v-if="type > 2">
-            <el-button @click="state = false" size="small">取 消</el-button>
-            <el-button type="primary" @click="onOk" size="small">确 定</el-button>
-          </span>
+            <span slot="footer" class="dialog-footer">
+                <el-button @click="state = false" size="small">取 消</el-button>
+                <el-button type="primary" @click="onOk" size="small">确 定</el-button>
+            </span>
         </el-dialog>
     </div>
 </template>
@@ -44,7 +45,7 @@ import 'codemirror/mode/pug/pug';
 import is from '@form-create/utils/lib/type';
 import formCreate from '@form-create/element-ui';
 
-const TITLE = ['生成规则', '表单规则', '生成组件', '设置生成规则', '设置表单规则'];
+const TITLE = ['生成规则', '表单规则', '更新文件', '设置生成规则', '设置表单规则'];
 
 export default {
     name: 'app',
@@ -56,6 +57,7 @@ export default {
             editor: null,
             err: false,
             type: -1,
+            jsonType: 'Array',
         };
     },
     watch: {
@@ -82,7 +84,7 @@ export default {
             this.$nextTick(() => {
                 this.editor = CodeMirror(this.$refs.editor, {
                     lineNumbers: true,
-                    mode: this.type === 2 ? {name: 'vue'} : 'application/json',
+                    mode: 'application/json',
                     gutters: ['CodeMirror-lint-markers'],
                     lint: true,
                     line: true,
@@ -103,6 +105,7 @@ export default {
             this.type = 0;
             this.value = this.$refs.designer.getRule();
         },
+
         showOption() {
             this.state = true;
             this.type = 1;
@@ -111,8 +114,27 @@ export default {
         showTemplate() {
             this.state = true;
             this.type = 2;
-            this.value = this.makeTemplate();
+            // this.value = this.makeTemplate();
+
+            let code;
+            if (this.jsonType == 'Array') {
+                code = this.$refs.designer.getRule()             
+            } else if (this.jsonType == 'Object') {
+                code = {
+                    rule: this.$refs.designer.getRule(),
+                    option: this.$refs.designer.getOption(),
+                }
+            }
+
+            // this.value = this.$refs.designer.getRule()
+            this.value = JSON.stringify(code,null,2)
+            // this.value = formCreate.toJson(code).replaceAll('\\','\\\\');
+            // this.value = formCreate.toJson(code).replaceAll('\\','\\\\').replaceAll(',',',\n').replaceAll('{','{\n').replaceAll('}','\n}')
+
+
         },
+
+
         setJson() {
             this.state = true;
             this.type = 3;
@@ -123,22 +145,34 @@ export default {
             this.type = 4;
             this.value = {form: {}};
         },
+
+
         onOk() {
             if (this.err) return;
+
             const json = this.editor.getValue();
             let val = JSON.parse(json);
-            if (this.type === 3) {
+
+            if (this.type === 3) { // 设置rule
                 if (!Array.isArray(val)) {
                     this.err = true;
                     return;
                 }
                 this.$refs.designer.setRule(formCreate.parseJson(json));
-            } else {
+            } else if (this.type === 1) { // 设置option
                 if (!is.Object(val) || !val.form) {
                     this.err = true;
                     return;
                 }
                 this.$refs.designer.setOption(val);
+            } else if (this.type == 2) { // 覆盖本地文件
+                window.parent.postMessage({
+                    cmd: 'writeFile',
+                    data: {
+                        code: val,    
+                        jsonPath: window.$JSONPATH
+                    }
+                }, '*')
             }
             this.state = false;
         },
@@ -178,8 +212,21 @@ export default {
         window.jsonlint = jsonlint;
     },
     mounted() {
-        // this.$message(JSON.strinfy(window.$JSON))
-        this.$refs.designer.setRule(window.$JSON)
+        if (Array.isArray(window.$JSON)) { // 先判断是否为数组类型
+            this.jsonType = "Array"
+            this.$refs.designer.setRule(window.$JSON)
+        } else if (is.Object(window.$JSON)) { // 先判断是否为对象类型
+            this.jsonType = "Object"
+            const rule = window.$JSON.rule 
+            const option = window.$JSON.option
+            
+            if (rule) {
+                this.$refs.designer.setRule(rule)
+            }
+            if (option) {
+                this.$refs.designer.setOption(option)
+            }
+        }
     }
 };
 

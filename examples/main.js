@@ -16,6 +16,7 @@ window.addEventListener('message', init, false)
 function init(event) {
     if (event.data.cmd === 'mountApp') {
         window.$JSON = event.data.data  
+        window.$JSONPATH = event.data.jsonPath  
 
         new Vue({
             render: h => h(App),
